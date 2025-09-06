@@ -24,11 +24,18 @@ export const PropertiesPanel = ({ selectedElement, onElementUpdate, onElementDel
   }
 
   const updateProperty = (key: string, value: any) => {
+    console.log('🔧 PropertiesPanel - Updating property:', key, 'to:', value);
+    console.log('🔧 PropertiesPanel - Current properties before update:', selectedElement.properties);
+    
+    const updatedProperties = {
+      ...selectedElement.properties,
+      [key]: value
+    };
+    
+    console.log('🔧 PropertiesPanel - New properties:', updatedProperties);
+    
     onElementUpdate(selectedElement.id, {
-      properties: {
-        ...selectedElement.properties,
-        [key]: value
-      }
+      properties: updatedProperties
     });
   };
 

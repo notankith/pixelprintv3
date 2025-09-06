@@ -1,7 +1,7 @@
-import { StickerDesigner } from '@/components/StickerDesigner';
+import AppContainer from '@/components/AppContainer';
 
 const Index = () => {
-  return <StickerDesigner />;
+  return <AppContainer />;
 };
 
 export default Index;

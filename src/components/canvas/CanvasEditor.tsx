@@ -4,6 +4,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { toast } from 'sonner';
 import type { Design, DesignElement } from '../StickerDesigner';
+import { registerCanvas, unregisterCanvas, clearCanvas } from '@/utils/canvasManager';
 
 export interface CanvasEditorHandle {
   addElement: (element: DesignElement) => void;
@@ -14,6 +15,8 @@ export interface CanvasEditorHandle {
   exportPDF: (filename?: string) => Promise<void>;
   exportImage: (filename?: string) => Promise<void>;
   print: () => Promise<void>;
+  generateLiveThumbnail: () => Promise<string>;
+  getCanvasDataURL: () => Promise<string>;
 }
 
 interface CanvasEditorProps {
@@ -28,9 +31,9 @@ const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
 
-    // Initialize Fabric Canvas
+    // Initialize Fabric Canvas (only once)
     useEffect(() => {
-      if (!canvasRef.current) return;
+      if (!canvasRef.current || fabricCanvas) return;
 
       console.log('Initializing Fabric canvas...');
       const canvas = new FabricCanvas(canvasRef.current, {
@@ -61,7 +64,30 @@ const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(
         console.log('Disposing Fabric canvas...');
         canvas.dispose();
       };
-    }, [design.canvasWidth, design.canvasHeight]);
+    }, []); // Only run once, don't depend on design dimensions
+
+    // Handle canvas size changes separately
+    useEffect(() => {
+      if (!fabricCanvas) return;
+
+      console.log('Updating canvas size to:', design.canvasWidth, 'x', design.canvasHeight);
+      
+      // Update canvas dimensions without recreating
+      fabricCanvas.setWidth(design.canvasWidth);
+      fabricCanvas.setHeight(design.canvasHeight);
+      
+      // Update the underlying canvas element size
+      const canvasElement = fabricCanvas.getElement();
+      if (canvasElement) {
+        canvasElement.width = design.canvasWidth;
+        canvasElement.height = design.canvasHeight;
+      }
+      
+      // Re-render the canvas
+      fabricCanvas.renderAll();
+      
+      console.log('Canvas size updated successfully');
+    }, [fabricCanvas, design.canvasWidth, design.canvasHeight]);
 
     // Handle canvas events
     useEffect(() => {
@@ -121,6 +147,10 @@ const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(
         const elementId = (obj as any).elementId;
         if (elementId) {
           console.log('Object modified:', elementId);
+          
+          // Ensure coordinates are updated after modification
+          obj.setCoords();
+          
           // Final update after modification is complete
           onElementUpdate(elementId, {
             x: Math.round(obj.left),
@@ -130,13 +160,32 @@ const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(
             rotation: Math.round(obj.angle),
           });
           
-          // Ensure object stays selected after modification
+          // Ensure object stays selected after modification with proper coordinates
           setTimeout(() => {
             if (fabricCanvas.getActiveObject() !== obj) {
               fabricCanvas.setActiveObject(obj);
-              fabricCanvas.renderAll();
             }
+            obj.setCoords();
+            fabricCanvas.renderAll();
+            
+            // Extra step to ensure transform controls are perfectly aligned
+            fabricCanvas.requestRenderAll();
           }, 10);
+        }
+      };
+
+      // Handle coordinate updates during transforms - ensures transform controls stay aligned
+      const handleAfterTransform = (e: any) => {
+        const obj = e.target;
+        if (obj) {
+          obj.setCoords();
+          fabricCanvas.renderAll();
+          
+          // Additional render pass to ensure perfect alignment
+          setTimeout(() => {
+            obj.setCoords();
+            fabricCanvas.requestRenderAll();
+          }, 0);
         }
       };
 
@@ -202,6 +251,9 @@ const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(
             fontFamily: element.properties.fontFamily || 'Arial',
             fill: element.properties.color || '#000000',
             angle: element.rotation,
+            fontWeight: element.properties.bold ? 'bold' : 'normal',
+            fontStyle: element.properties.italic ? 'italic' : 'normal',
+            textAlign: element.properties.alignment || 'left',
             selectable: true,
             evented: true,
             hasControls: true,
@@ -333,6 +385,9 @@ const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(
             fontFamily: element.properties.fontFamily || 'Arial',
             fill: element.properties.color || '#000000',
             angle: element.rotation,
+            fontWeight: element.properties.bold ? 'bold' : 'normal',
+            fontStyle: element.properties.italic ? 'italic' : 'normal',
+            textAlign: element.properties.alignment || 'left',
             selectable: true,
             evented: true,
             hasControls: true,
@@ -432,6 +487,9 @@ const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(
         if (obj) {
           const wasSelected = fabricCanvas.getActiveObject() === obj;
           
+          // Disable events temporarily to prevent feedback loops
+          obj.set('evented', false);
+          
           if (updates.x !== undefined) obj.set('left', updates.x);
           if (updates.y !== undefined) obj.set('top', updates.y);
           if (updates.rotation !== undefined) obj.set('angle', updates.rotation);
@@ -446,6 +504,9 @@ const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(
             if (updates.height !== undefined) {
               obj.set('scaleY', updates.height / currentHeight);
             }
+            
+            // Update object coordinates after scaling
+            obj.setCoords();
           }
           
           // Update text content if it's a text element
@@ -455,23 +516,91 @@ const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(
           
           // Update other text properties
           if (obj.type === 'text' && updates.properties) {
+            console.log('🎨 CanvasEditor - Updating text properties:', updates.properties);
+            console.log('🎨 CanvasEditor - Current text object properties before update:', {
+              fontFamily: (obj as any).fontFamily,
+              fontWeight: (obj as any).fontWeight,
+              fontStyle: (obj as any).fontStyle,
+              fontSize: (obj as any).fontSize,
+              fill: (obj as any).fill,
+              textAlign: (obj as any).textAlign
+            });
+            
             if (updates.properties.fontSize !== undefined) {
               obj.set('fontSize', updates.properties.fontSize);
+              console.log('🎨 CanvasEditor - Updated fontSize to:', updates.properties.fontSize);
             }
             if (updates.properties.fontFamily !== undefined) {
               obj.set('fontFamily', updates.properties.fontFamily);
+              console.log('🎨 CanvasEditor - Updated fontFamily to:', updates.properties.fontFamily);
             }
             if (updates.properties.color !== undefined) {
               obj.set('fill', updates.properties.color);
+              console.log('🎨 CanvasEditor - Updated color to:', updates.properties.color);
             }
+            if (updates.properties.bold !== undefined) {
+              const fontWeight = updates.properties.bold ? 'bold' : 'normal';
+              obj.set('fontWeight', fontWeight);
+              console.log('🎨 CanvasEditor - Updated fontWeight to:', fontWeight);
+            }
+            if (updates.properties.italic !== undefined) {
+              const fontStyle = updates.properties.italic ? 'italic' : 'normal';  
+              obj.set('fontStyle', fontStyle);
+              console.log('🎨 CanvasEditor - Updated fontStyle to:', fontStyle);
+            }
+            if (updates.properties.alignment !== undefined) {
+              obj.set('textAlign', updates.properties.alignment);
+              console.log('🎨 CanvasEditor - Updated textAlign to:', updates.properties.alignment);
+            }
+            
+            console.log('🎨 CanvasEditor - Text object properties after update:', {
+              fontFamily: (obj as any).fontFamily,
+              fontWeight: (obj as any).fontWeight,
+              fontStyle: (obj as any).fontStyle,
+              fontSize: (obj as any).fontSize,
+              fill: (obj as any).fill,
+              textAlign: (obj as any).textAlign
+            });
+            
+            // Force text re-calculation and immediate re-render
+            (obj as any)._clearCache();
+            (obj as any).initDimensions();
+            obj.setCoords();
+            obj.dirty = true;
+            fabricCanvas.renderAll();
+            fabricCanvas.requestRenderAll();
+            
+            // Extra render to ensure changes are visible
+            setTimeout(() => {
+              obj.setCoords();
+              fabricCanvas.renderAll();
+              fabricCanvas.requestRenderAll();
+            }, 10);
           }
           
+          // Re-enable events
+          obj.set('evented', true);
+          
+          // Force coordinate update and render
+          obj.setCoords();
           fabricCanvas.renderAll();
           
           // Maintain selection if the object was previously selected
           if (wasSelected) {
             fabricCanvas.setActiveObject(obj);
+            obj.setCoords(); // Ensure handles are aligned
             fabricCanvas.renderAll();
+            
+            // Extra alignment step for perfect transform control positioning
+            setTimeout(() => {
+              obj.setCoords();
+              fabricCanvas.requestRenderAll();
+              
+              // Trigger selection change to update properties panel
+              if (onElementSelect) {
+                onElementSelect((obj as any).elementId);
+              }
+            }, 0);
           }
         }
       },
@@ -676,13 +805,147 @@ const CanvasEditor = forwardRef<CanvasEditorHandle, CanvasEditorProps>(
           console.error('Print error:', error);
           toast.error('Failed to print. Please try again.');
         }
+      },
+
+      generateLiveThumbnail: async () => {
+        if (!fabricCanvas) {
+          throw new Error('Canvas is not ready');
+        }
+
+        // Clear any active selections for clean thumbnail
+        fabricCanvas.discardActiveObject();
+        fabricCanvas.renderAll();
+        
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Generate high-quality thumbnail directly from live canvas
+        return fabricCanvas.toDataURL({
+          format: 'png',
+          quality: 1.0,
+          multiplier: 2, // Higher resolution for crisp thumbnails
+        });
+      },
+
+      getCanvasDataURL: async () => {
+        if (!fabricCanvas) {
+          throw new Error('Canvas is not ready');
+        }
+
+        // Clear any active selections
+        fabricCanvas.discardActiveObject();
+        fabricCanvas.renderAll();
+        
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Get exact canvas data at full resolution
+        return fabricCanvas.toDataURL({
+          format: 'png',
+          quality: 1.0,
+          multiplier: 1, // Exact 1:1 ratio
+        });
       }
     }), [fabricCanvas, design.elements]);
 
+    // Register this canvas globally so dashboard can access it
+    useEffect(() => {
+      if (!fabricCanvas || !design.id) return;
+      
+      // Clear any existing canvas registration before registering this one
+      clearCanvas();
+      
+      const printFunction = async () => {
+        if (!fabricCanvas) {
+          toast.error('Canvas is not ready');
+          return;
+        }
+        
+        try {
+          console.log('🖨️ Starting direct canvas print...');
+          toast('Preparing for print...');
+          
+          // Clear any active selections
+          fabricCanvas.discardActiveObject();
+          fabricCanvas.renderAll();
+          
+          await new Promise(resolve => setTimeout(resolve, 200));
+          
+          // Get exact canvas dimensions
+          const canvasWidth = fabricCanvas.getWidth();
+          const canvasHeight = fabricCanvas.getHeight();
+          
+          // Export canvas as image
+          const dataURL = fabricCanvas.toDataURL({
+            format: 'png',
+            quality: 1,
+            multiplier: 1, // Exact 1:1 ratio
+          });
+          
+          console.log('Canvas prepared for print');
+          
+          // Create PDF for printing with exact dimensions
+          const pdf = new jsPDF({
+            orientation: canvasWidth > canvasHeight ? 'landscape' : 'portrait',
+            unit: 'px',
+            format: [canvasWidth, canvasHeight]
+          });
+          
+          pdf.addImage(dataURL, 'PNG', 0, 0, canvasWidth, canvasHeight);
+          
+          // Create blob and open print dialog
+          const pdfBlob = pdf.output('blob');
+          const blobURL = URL.createObjectURL(pdfBlob);
+          
+          // Open in new window for printing
+          const printWindow = window.open(blobURL, '_blank');
+          
+          if (printWindow) {
+            printWindow.onload = function() {
+              setTimeout(() => {
+                printWindow.print();
+              }, 500);
+            };
+            
+            // Clean up blob URL after use
+            setTimeout(() => {
+              URL.revokeObjectURL(blobURL);
+            }, 5000);
+            
+            toast.success('Print dialog opened!');
+          } else {
+            // Fallback: download if popup blocked
+            const link = document.createElement('a');
+            link.href = blobURL;
+            link.download = 'design-print.pdf';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(blobURL);
+            toast.success('PDF downloaded (popup blocked)');
+          }
+          
+        } catch (error) {
+          console.error('Print error:', error);
+          toast.error('Failed to print. Please try again.');
+        }
+      };
+      
+      console.log('🎯 Registering canvas globally for design:', design.id);
+      registerCanvas(printFunction, fabricCanvas, design.id, true, fabricCanvas); // keepAlive = true, pass fabricCanvas
+      
+      return () => {
+        console.log('🎯 Component unmounting for design:', design.id, '- keeping canvas alive');
+        // Don't unregister on unmount, keep it alive for dashboard access
+      };
+    }, [fabricCanvas, design.id]);
+
     return (
-      <div className="flex-1 flex items-center justify-center bg-gray-100 p-4">
-        <div className="border border-gray-300 shadow-lg">
+      <div className="flex-1 flex flex-col items-center justify-center bg-gray-100 p-4">
+        <div className="border border-gray-300 shadow-lg relative">
           <canvas ref={canvasRef} />
+          {/* Canvas size indicator */}
+          <div className="absolute -top-6 left-0 text-xs text-gray-500 bg-white px-2 py-1 rounded border">
+            {design.canvasWidth} × {design.canvasHeight}px
+          </div>
         </div>
       </div>
     );

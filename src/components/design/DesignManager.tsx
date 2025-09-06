@@ -4,10 +4,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Save, Plus, FolderOpen, Trash2, Download } from 'lucide-react';
+import { Save, Plus, FolderOpen, Trash2, Download, RefreshCw } from 'lucide-react';
 import { Design } from '../StickerDesigner';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { generateCanvasThumbnail } from '@/utils/canvasUtils';
 
 interface DesignManagerProps {
   currentDesign: Design;
@@ -23,9 +24,6 @@ export const DesignManager = ({
   const [designs, setDesigns] = useState<Design[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [designName, setDesignName] = useState(currentDesign.name);
-  const [canvasWidth, setCanvasWidth] = useState(currentDesign.canvasWidth);
-  const [canvasHeight, setCanvasHeight] = useState(currentDesign.canvasHeight);
-  const [isEditingCanvas, setIsEditingCanvas] = useState(false);
 
   // Load designs on component mount
   useEffect(() => {
@@ -35,9 +33,7 @@ export const DesignManager = ({
   // Update design name when current design changes
   useEffect(() => {
     setDesignName(currentDesign.name);
-    setCanvasWidth(currentDesign.canvasWidth);
-    setCanvasHeight(currentDesign.canvasHeight);
-  }, [currentDesign.name, currentDesign.canvasWidth, currentDesign.canvasHeight]);
+  }, [currentDesign.name]);
 
   const loadDesigns = async () => {
     try {
@@ -72,11 +68,24 @@ export const DesignManager = ({
 
     setIsLoading(true);
     try {
+      // Generate thumbnail first
+      toast('Generating thumbnail...');
+      let thumbnailUrl = null;
+      
+      try {
+        thumbnailUrl = await generateCanvasThumbnail(currentDesign);
+        console.log('✅ Thumbnail generated successfully');
+      } catch (error) {
+        console.warn('⚠️ Failed to generate thumbnail:', error);
+        // Continue with save even if thumbnail fails
+      }
+
       const designData = {
         name: designName.trim(),
         canvas_width: currentDesign.canvasWidth,
         canvas_height: currentDesign.canvasHeight,
-        elements: currentDesign.elements as any
+        elements: currentDesign.elements as any,
+        thumbnail_url: thumbnailUrl
       };
 
       let result;
@@ -122,6 +131,28 @@ export const DesignManager = ({
   const loadDesign = async (design: Design) => {
     onDesignLoad(design);
     toast.success(`Loaded "${design.name}"`);
+  };
+
+  const regenerateThumbnail = async (design: Design) => {
+    if (!design.id) return;
+    
+    try {
+      toast('Regenerating thumbnail...');
+      const thumbnailUrl = await generateCanvasThumbnail(design);
+      
+      // Update in database
+      await supabase
+        .from('designs')
+        .update({ thumbnail_url: thumbnailUrl })
+        .eq('id', design.id);
+      
+      // Reload designs to show updated thumbnail
+      loadDesigns();
+      toast.success('Thumbnail regenerated successfully');
+    } catch (error) {
+      console.error('Error regenerating thumbnail:', error);
+      toast.error('Failed to regenerate thumbnail');
+    }
   };
 
   const deleteDesign = async (designId: string) => {
@@ -234,14 +265,25 @@ export const DesignManager = ({
                         variant="outline"
                         size="icon"
                         className="h-6 w-6"
+                        title="Load Design"
                       >
                         <FolderOpen className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        onClick={() => regenerateThumbnail(design)}
+                        variant="outline"
+                        size="icon"
+                        className="h-6 w-6"
+                        title="Regenerate Thumbnail"
+                      >
+                        <RefreshCw className="w-3 h-3" />
                       </Button>
                       <Button
                         onClick={() => design.id && deleteDesign(design.id)}
                         variant="outline"
                         size="icon"
                         className="h-6 w-6 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                        title="Delete Design"
                       >
                         <Trash2 className="w-3 h-3" />
                       </Button>
@@ -249,11 +291,16 @@ export const DesignManager = ({
                   </div>
 
                   {design.thumbnailUrl && (
-                    <img 
-                      src={design.thumbnailUrl} 
-                      alt={design.name}
-                      className="w-full h-16 object-cover rounded border"
-                    />
+                    <div className="w-full h-20 bg-gray-50 rounded border overflow-hidden">
+                      <img 
+                        src={design.thumbnailUrl} 
+                        alt={design.name}
+                        className="w-full h-full object-contain"
+                        style={{ 
+                          imageRendering: 'crisp-edges'
+                        }}
+                      />
+                    </div>
                   )}
                 </div>
               </Card>
