@@ -210,17 +210,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToEditor }) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-beige">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-pastel-yellow shadow-sm border-b border-pastel-purple">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">PixelPrint</h1>
+              <h1 className="text-3xl font-bold text-pastel-purple">PixelPrint</h1>
             </div>
             <Button 
               onClick={() => onNavigateToEditor()}
-              className="mt-4 sm:mt-0"
+              className="mt-4 sm:mt-0 bg-pastel-green hover:bg-pastel-blue text-pastel-purple border-2 border-pastel-purple"
               size="lg"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -230,10 +230,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToEditor }) => {
         </div>
       </div>
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 bg-beige">
         <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Your Designs</h2>
-          <Separator />
+          <h2 className="text-xl font-semibold text-pastel-purple mb-2">Your Designs</h2>
+          <Separator className="bg-pastel-blue" />
         </div>
 
         {isLoading ? (
@@ -272,18 +272,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToEditor }) => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {designs.map((design) => (
-              <Card key={design.id} className="hover:shadow-lg transition-shadow duration-200">
-                <CardHeader className="pb-3">
+              <Card key={design.id} className="hover:shadow-lg transition-shadow duration-200 border-2 border-pastel-purple bg-pastel-yellow">
+                <CardHeader className="pb-3 bg-pastel-blue rounded-t-md">
                   <div className="aspect-video">
                     {renderThumbnail(design)}
                   </div>
                 </CardHeader>
-                <CardContent className="pt-0">
+                <CardContent className="pt-0 bg-pastel-yellow rounded-b-md">
                   <div className="mb-3">
-                    <h3 className="font-medium text-gray-900 truncate" title={design.name}>
+                    <h3 className="font-medium text-pastel-purple truncate" title={design.name}>
                       {design.name}
                     </h3>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-pastel-green mt-1">
                       Modified {formatDate(design.updated_at)}
                     </p>
                   </div>
@@ -292,7 +292,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToEditor }) => {
                       variant="default"
                       size="sm"
                       onClick={() => handleEdit(design)}
-                      className="flex-1"
+                      className="flex-1 bg-pastel-green hover:bg-pastel-blue text-pastel-purple border-2 border-pastel-purple"
                     >
                       <Edit className="h-3 w-3 mr-1" />
                       Edit
@@ -301,9 +301,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToEditor }) => {
                       variant="outline"
                       size="sm"
                       onClick={() => handleDelete(design.id, design.name)}
-                      className="px-2 hover:bg-red-50 hover:border-red-200"
+                      className="px-2 hover:bg-pastel-pink hover:border-pastel-purple border-2 border-pastel-purple bg-pastel-pink"
                     >
-                      <Trash2 className="h-3 w-3 text-red-500" />
+                      <Trash2 className="h-3 w-3 text-pastel-purple" />
                     </Button>
                   </div>
                 </CardContent>
@@ -312,9 +312,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToEditor }) => {
           </div>
         )}
       </div>
-      {/* Footer with developer credits */}
-      <footer className="w-full bg-gray-100 text-center py-2 border-t">
-        <span className="text-gray-600 text-sm">© 2025 <a href="https://ankith.studio" target="_blank" rel="noopener noreferrer" className="hover:text-gray-800 font-semibold underline decoration-1">ankith.studio</a></span>
+      {/* Footer separator and credits at the extreme bottom */}
+      <div className="w-full h-2 bg-pastel-purple opacity-40 mt-8" />
+      <footer className="w-full bg-pastel-blue text-center py-4 mt-0 border-t-2 border-pastel-purple">
+        <a href="https://ankith.studio" target="_blank" rel="noopener noreferrer" className="text-pastel-purple font-medium hover:underline">
+          ankith.studio
+        </a>
       </footer>
     </div>
   );

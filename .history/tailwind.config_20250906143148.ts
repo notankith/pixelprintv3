@@ -59,7 +59,7 @@ export default {
 					blue: '#e3f2fd',
 					green: '#d6f5e3',
 					purple: '#e6e6fa'
-				},
+				}
 				card: {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'

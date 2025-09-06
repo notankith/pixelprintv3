@@ -210,7 +210,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToEditor }) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -230,7 +230,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToEditor }) => {
         </div>
       </div>
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Your Designs</h2>
           <Separator />
@@ -313,8 +313,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToEditor }) => {
         )}
       </div>
       {/* Footer with developer credits */}
-      <footer className="w-full bg-gray-100 text-center py-2 border-t">
-        <span className="text-gray-600 text-sm">© 2025 <a href="https://ankith.studio" target="_blank" rel="noopener noreferrer" className="hover:text-gray-800 font-semibold underline decoration-1">ankith.studio</a></span>
+      <footer className="w-full bg-gray-100 text-center py-4 mt-8 border-t">
+        <a href="https://ankith.studio" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-800 font-medium">
+          ankith.studio
+        </a>
       </footer>
     </div>
   );

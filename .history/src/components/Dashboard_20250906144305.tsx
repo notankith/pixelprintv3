@@ -314,7 +314,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToEditor }) => {
       </div>
       {/* Footer with developer credits */}
       <footer className="w-full bg-gray-100 text-center py-2 border-t">
-        <span className="text-gray-600 text-sm">© 2025 <a href="https://ankith.studio" target="_blank" rel="noopener noreferrer" className="hover:text-gray-800 font-semibold underline decoration-1">ankith.studio</a></span>
+        <span className="text-gray-600 text-sm">© 2025 ankith.studio</span>
       </footer>
     </div>
   );

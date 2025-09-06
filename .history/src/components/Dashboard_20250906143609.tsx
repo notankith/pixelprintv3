@@ -142,7 +142,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToEditor }) => {
     if (design.thumbnail) {
       return (
         <div className="relative">
-          <div className="w-full h-40 bg-gray-50 rounded-md border overflow-hidden">
+          <div className="w-full h-40 bg-pastel-pink rounded-md border-2 border-pastel-purple overflow-hidden">
             <img 
               src={design.thumbnail} 
               alt={design.name}
@@ -156,7 +156,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToEditor }) => {
             variant="ghost"
             size="sm"
             onClick={() => generateNewThumbnail(design)}
-            className="absolute top-1 right-1 h-6 w-6 p-0 bg-white/80 hover:bg-white"
+            className="absolute top-1 right-1 h-6 w-6 p-0 bg-pastel-yellow hover:bg-pastel-blue border border-pastel-purple"
             disabled={isGenerating}
           >
             <RefreshCw className={`h-3 w-3 ${isGenerating ? 'animate-spin' : ''}`} />
@@ -171,20 +171,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToEditor }) => {
     const hasImage = design.elements.some(e => e.type === 'image');
     
     return (
-      <div className="relative w-full h-40 bg-gray-100 border-2 border-dashed border-gray-300 rounded-md flex flex-col items-center justify-center text-gray-500 text-sm">
+      <div className="relative w-full h-40 bg-pastel-pink border-2 border-pastel-purple rounded-md flex flex-col items-center justify-center text-pastel-purple text-sm">
         <div className="font-medium">{design.canvasWidth} × {design.canvasHeight}</div>
         <div className="mt-1">
           {elementCount} element{elementCount !== 1 ? 's' : ''}
         </div>
         <div className="flex gap-1 mt-1">
-          {hasText && <Badge variant="secondary" className="text-xs">Text</Badge>}
-          {hasImage && <Badge variant="secondary" className="text-xs">Image</Badge>}
+          {hasText && <Badge variant="secondary" className="text-xs bg-pastel-blue text-pastel-purple">Text</Badge>}
+          {hasImage && <Badge variant="secondary" className="text-xs bg-pastel-green text-pastel-purple">Image</Badge>}
         </div>
         <Button
           variant="outline"
           size="sm"
           onClick={() => generateNewThumbnail(design)}
-          className="mt-2 h-6 text-xs"
+          className="mt-2 h-6 text-xs border-2 border-pastel-purple bg-pastel-yellow text-pastel-purple hover:bg-pastel-blue"
           disabled={isGenerating}
         >
           {isGenerating ? (
@@ -210,17 +210,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToEditor }) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#faf0e6' }}>
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">PixelPrint</h1>
+              <h1 className="text-3xl font-bold text-gray-800">PixelPrint</h1>
             </div>
             <Button 
               onClick={() => onNavigateToEditor()}
-              className="mt-4 sm:mt-0"
+              className="mt-4 sm:mt-0 bg-white hover:bg-gray-50 text-gray-800 border-2 border-gray-300"
               size="lg"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -230,10 +230,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToEditor }) => {
         </div>
       </div>
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1" style={{ backgroundColor: '#faf0e6' }}>
         <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Your Designs</h2>
-          <Separator />
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Your Designs</h2>
+          <Separator className="bg-gray-300" />
         </div>
 
         {isLoading ? (
@@ -272,18 +272,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToEditor }) => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {designs.map((design) => (
-              <Card key={design.id} className="hover:shadow-lg transition-shadow duration-200">
-                <CardHeader className="pb-3">
+              <Card key={design.id} className="hover:shadow-lg transition-shadow duration-200 border-2 border-gray-200 bg-white">
+                <CardHeader className="pb-3 bg-gray-50 rounded-t-md">
                   <div className="aspect-video">
                     {renderThumbnail(design)}
                   </div>
                 </CardHeader>
-                <CardContent className="pt-0">
+                <CardContent className="pt-0 bg-white rounded-b-md">
                   <div className="mb-3">
-                    <h3 className="font-medium text-gray-900 truncate" title={design.name}>
+                    <h3 className="font-medium text-gray-800 truncate" title={design.name}>
                       {design.name}
                     </h3>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-gray-600 mt-1">
                       Modified {formatDate(design.updated_at)}
                     </p>
                   </div>
@@ -292,7 +292,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToEditor }) => {
                       variant="default"
                       size="sm"
                       onClick={() => handleEdit(design)}
-                      className="flex-1"
+                      className="flex-1 bg-white hover:bg-gray-50 text-gray-800 border-2 border-gray-300"
                     >
                       <Edit className="h-3 w-3 mr-1" />
                       Edit
@@ -301,7 +301,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToEditor }) => {
                       variant="outline"
                       size="sm"
                       onClick={() => handleDelete(design.id, design.name)}
-                      className="px-2 hover:bg-red-50 hover:border-red-200"
+                      className="px-2 hover:bg-red-50 hover:border-red-200 border-2 border-gray-300 bg-white"
                     >
                       <Trash2 className="h-3 w-3 text-red-500" />
                     </Button>
@@ -312,9 +312,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToEditor }) => {
           </div>
         )}
       </div>
-      {/* Footer with developer credits */}
-      <footer className="w-full bg-gray-100 text-center py-2 border-t">
-        <span className="text-gray-600 text-sm">© 2025 <a href="https://ankith.studio" target="_blank" rel="noopener noreferrer" className="hover:text-gray-800 font-semibold underline decoration-1">ankith.studio</a></span>
+      {/* Footer separator and credits at the extreme bottom */}
+      <div className="w-full h-2 bg-pastel-purple opacity-40 mt-8" />
+      <footer className="w-full bg-pastel-blue text-center py-4 mt-0 border-t-2 border-pastel-purple">
+        <a href="https://ankith.studio" target="_blank" rel="noopener noreferrer" className="text-pastel-purple font-medium hover:underline">
+          ankith.studio
+        </a>
       </footer>
     </div>
   );

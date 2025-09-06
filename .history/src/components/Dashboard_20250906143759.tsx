@@ -142,7 +142,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToEditor }) => {
     if (design.thumbnail) {
       return (
         <div className="relative">
-          <div className="w-full h-40 bg-gray-50 rounded-md border overflow-hidden">
+          <div className="w-full h-40 bg-gray-50 rounded-md border-2 border-gray-200 overflow-hidden">
             <img 
               src={design.thumbnail} 
               alt={design.name}
@@ -156,7 +156,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToEditor }) => {
             variant="ghost"
             size="sm"
             onClick={() => generateNewThumbnail(design)}
-            className="absolute top-1 right-1 h-6 w-6 p-0 bg-white/80 hover:bg-white"
+            className="absolute top-1 right-1 h-6 w-6 p-0 bg-white hover:bg-gray-50 border border-gray-300"
             disabled={isGenerating}
           >
             <RefreshCw className={`h-3 w-3 ${isGenerating ? 'animate-spin' : ''}`} />
@@ -171,20 +171,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToEditor }) => {
     const hasImage = design.elements.some(e => e.type === 'image');
     
     return (
-      <div className="relative w-full h-40 bg-gray-100 border-2 border-dashed border-gray-300 rounded-md flex flex-col items-center justify-center text-gray-500 text-sm">
+      <div className="relative w-full h-40 bg-gray-50 border-2 border-gray-200 rounded-md flex flex-col items-center justify-center text-gray-600 text-sm">
         <div className="font-medium">{design.canvasWidth} × {design.canvasHeight}</div>
         <div className="mt-1">
           {elementCount} element{elementCount !== 1 ? 's' : ''}
         </div>
         <div className="flex gap-1 mt-1">
-          {hasText && <Badge variant="secondary" className="text-xs">Text</Badge>}
-          {hasImage && <Badge variant="secondary" className="text-xs">Image</Badge>}
+          {hasText && <Badge variant="secondary" className="text-xs bg-gray-200 text-gray-700">Text</Badge>}
+          {hasImage && <Badge variant="secondary" className="text-xs bg-gray-200 text-gray-700">Image</Badge>}
         </div>
         <Button
           variant="outline"
           size="sm"
           onClick={() => generateNewThumbnail(design)}
-          className="mt-2 h-6 text-xs"
+          className="mt-2 h-6 text-xs border-2 border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
           disabled={isGenerating}
         >
           {isGenerating ? (
@@ -210,7 +210,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToEditor }) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -230,7 +230,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToEditor }) => {
         </div>
       </div>
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Your Designs</h2>
           <Separator />
@@ -312,10 +312,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToEditor }) => {
           </div>
         )}
       </div>
-      {/* Footer with developer credits */}
-      <footer className="w-full bg-gray-100 text-center py-2 border-t">
-        <span className="text-gray-600 text-sm">© 2025 <a href="https://ankith.studio" target="_blank" rel="noopener noreferrer" className="hover:text-gray-800 font-semibold underline decoration-1">ankith.studio</a></span>
-      </footer>
     </div>
   );
 };
